@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # third party libraries
-    "drf_yasg",
     "pwa",
     # apps
     "apps.caption",
