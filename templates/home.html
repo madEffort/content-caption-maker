@@ -3,27 +3,55 @@
 {% block extra_head %}
 <style>
   body {
-      display: flex;
-      font-family: Arial, sans-serif;
+    display: flex;
+    font-family: Arial, sans-serif;
   }
+
   #left-panel {
-      width: 60%;
-      padding: 20px;
+    width: 60%;
+    padding: 20px;
   }
+
   #right-panel {
-      width: 40%;
-      padding: 20px;
+    width: 40%;
+    padding: 20px;
   }
+
   video {
-      width: 100%;
-      height: auto;
+    width: 100%;
+    height: auto;
   }
+
   textarea {
-      width: 100%;
-      height: 200px;
+    width: 100%;
+    height: 200px;
   }
+
   .timestamp {
-      margin-bottom: 10px;
+    margin-bottom: 10px;
+  }
+
+  .drop-zone {
+    width: 100%;
+    max-width: 600px;
+    height: 300px;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    margin: 20px auto;
+    font-family: Arial, sans-serif;
+    color: #333;
+  }
+
+  .drop-zone.hover {
+    border-color: #000;
+  }
+
+  .drop-zone p {
+    pointer-events: none;
   }
 </style>
 {% endblock %}
@@ -32,130 +60,119 @@
 
 {% block content %}
 <div id="left-panel">
-  <input type="file" id="video-upload" accept="video/*">
+  <div class="drop-zone" id="drop-zone">
+    <p>Drag & Drop your video file here</p>
+  </div>
   <br><br>
-  <video id="video" controls></video>
+  <video id="video" controls hidden></video>
   <br><br>
   <div id="script">
-      <h3>Script</h3>
-      <textarea id="script-text" readonly></textarea>
+    <h3>Script</h3>
+    <textarea id="script-text" readonly></textarea>
   </div>
 </div>
 <div id="right-panel">
   <h3>Subtitles</h3>
   <div id="subtitles">
-      <div class="timestamp">
-          <label for="timestamp1">00:00:01</label>
-          <textarea id="timestamp1">Hello, Julia.</textarea>
-      </div>
-      <div class="timestamp">
-          <label for="timestamp2">00:00:05</label>
-          <textarea id="timestamp2">While filming today, I misspoke a few lines.</textarea>
-      </div>
-      <!-- More timestamps and textareas as needed -->
+    <div class="timestamp">
+      <label for="timestamp1">00:00:01</label>
+      <textarea id="timestamp1">Hello, Julia.</textarea>
+    </div>
+    <div class="timestamp">
+      <label for="timestamp2">00:00:05</label>
+      <textarea id="timestamp2">While filming today, I misspoke a few lines.</textarea>
+    </div>
+    <!-- More timestamps and textareas as needed -->
   </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-  document.getElementById('video-upload').addEventListener('change', function(event) {
-      const file = event.target.files[0];
-      const video = document.getElementById('video');
-      video.src = URL.createObjectURL(file);
-      video.load();
-      // TODO: Add backend interaction to extract script and subtitles
+  const dropZone = document.getElementById('drop-zone');
+  const videoElement = document.getElementById('video');
+  const scriptElement = document.getElementById('script');
+  const scriptTextElement = document.getElementById('script-text');
+  const subtitlesElement = document.getElementById('subtitles');
+
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('hover');
   });
+
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('hover');
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('hover');
+    const files = e.dataTransfer.files;
+    handleFiles(files);
+  });
+
+  function handleFiles(files) {
+    for (const file of files) {
+      if (file.type.startsWith('video/')) {
+        uploadFile(file);
+      } else {
+        alert('Please upload a valid video file.');
+      }
+    }
+  }
+
+  function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    fetch('{% url "transcribe_video" %}', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          videoElement.src = data.video_url;
+          videoElement.hidden = false;
+          dropZone.style.display = 'none';
+          scriptElement.hidden = false;
+          scriptTextElement.textContent = data.transcribed_text;
+          // TODO: Parse and display subtitles in #subtitles element
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
 
   // Example script data (normally this would come from a backend service)
   const scriptText = `Hello, Julia.
   While filming today, I misspoke a few lines.
   I need to reintroduce myself separately.
   Finally, I wish to apologize for any confusion.`;
-  
+
   document.getElementById('script-text').textContent = scriptText;
 
   // TODO: Add functionality to edit subtitles and save changes
 </script>
 {% endblock %}
-
-
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Subtitle Editor</title>
-    <style>
-        body {
-            display: flex;
-            font-family: Arial, sans-serif;
-        }
-        #left-panel {
-            width: 60%;
-            padding: 20px;
-        }
-        #right-panel {
-            width: 40%;
-            padding: 20px;
-        }
-        video {
-            width: 100%;
-            height: auto;
-        }
-        textarea {
-            width: 100%;
-            height: 200px;
-        }
-        .timestamp {
-            margin-bottom: 10px;
-        }
-    </style>
-</head>
-<body>
-    <div id="left-panel">
-        <input type="file" id="video-upload" accept="video/*">
-        <br><br>
-        <video id="video" controls></video>
-        <br><br>
-        <div id="script">
-            <h3>Script</h3>
-            <textarea id="script-text" readonly></textarea>
-        </div>
-    </div>
-    <div id="right-panel">
-        <h3>Subtitles</h3>
-        <div id="subtitles">
-            <div class="timestamp">
-                <label for="timestamp1">00:00:01</label>
-                <textarea id="timestamp1">Hello, Julia.</textarea>
-            </div>
-            <div class="timestamp">
-                <label for="timestamp2">00:00:05</label>
-                <textarea id="timestamp2">While filming today, I misspoke a few lines.</textarea>
-            </div>
-            // More timestamps and textareas as needed
-        </div>
-    </div>
-
-    <script>
-        document.getElementById('video-upload').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            const video = document.getElementById('video');
-            video.src = URL.createObjectURL(file);
-            video.load();
-            // TODO: Add backend interaction to extract script and subtitles
-        });
-
-        // Example script data (normally this would come from a backend service)
-        const scriptText = `Hello, Julia.
-        While filming today, I misspoke a few lines.
-        I need to reintroduce myself separately.
-        Finally, I wish to apologize for any confusion.`;
-        
-        document.getElementById('script-text').textContent = scriptText;
-
-        // TODO: Add functionality to edit subtitles and save changes
-    </script>
-</body>
-</html> -->
