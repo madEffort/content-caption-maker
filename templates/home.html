@@ -53,6 +53,25 @@
   .drop-zone p {
     pointer-events: none;
   }
+
+  .progress-bar-container {
+    width: 100%;
+    max-width: 600px;
+    height: 30px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 20px auto;
+    display: none;
+  }
+
+  .progress-bar {
+    height: 100%;
+    width: 0;
+    background-color: #4caf50;
+    transition: width 0.1s;
+  }
+
 </style>
 {% endblock %}
 
@@ -62,6 +81,9 @@
 <div id="left-panel">
   <div class="drop-zone" id="drop-zone">
     <p>Drag & Drop your video file here</p>
+  </div>
+  <div class="progress-bar-container" id="progress-bar-container">
+    <div class="progress-bar" id="progress-bar"></div>
   </div>
   <br><br>
   <video id="video" controls hidden></video>
@@ -94,6 +116,8 @@
   const scriptElement = document.getElementById('script');
   const scriptTextElement = document.getElementById('script-text');
   const subtitlesElement = document.getElementById('subtitles');
+  const progressBarContainer = document.getElementById('progress-bar-container');
+  const progressBar = document.getElementById('progress-bar');
 
   dropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -125,15 +149,24 @@
     const formData = new FormData();
     formData.append('file', file);
 
-    fetch('{% url "transcribe_video" %}', {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-      },
-    })
-      .then(response => response.json())
-      .then(data => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '{% url "caption:transcribe_video" %}', true);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const percentComplete = (e.loaded / e.total) * 100;
+        progressBar.style.width = percentComplete + '%';
+      }
+    };
+
+    xhr.onloadstart = () => {
+      progressBarContainer.style.display = 'block';
+      progressBar.style.width = '0%';
+    };
+
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        const data = JSON.parse(xhr.responseText);
         if (data.error) {
           alert(data.error);
         } else {
@@ -142,12 +175,22 @@
           dropZone.style.display = 'none';
           scriptElement.hidden = false;
           scriptTextElement.textContent = data.transcribed_text;
+          progressBarContainer.style.display = 'none';
           // TODO: Parse and display subtitles in #subtitles element
         }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-      });
+      } else {
+        alert('An error occurred during the upload. Please try again.');
+      }
+    };
+
+    xhr.onerror = () => {
+      alert('An error occurred during the upload. Please try again.');
+    };
+
+    // Include CSRF token in the request
+    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+
+    xhr.send(formData);
   }
 
   function getCookie(name) {
