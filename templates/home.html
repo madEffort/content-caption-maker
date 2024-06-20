@@ -13,17 +13,18 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
     padding: 20px;
-    margin: 20px;
   }
 
   #left-panel {
     width: 60%;
+    margin: 20px 10px 20px 20px;
   }
 
   #right-panel {
     width: 40%;
     height: 100vh;
     overflow-y: auto;
+    margin: 20px 20px 20px 10px;
   }
 
   video {
@@ -34,7 +35,7 @@
   }
 
   textarea {
-    width: 100%;
+    width: 95%;
     height: 100px;
     border-radius: 5px;
     border: 1px solid #ddd;
@@ -115,7 +116,6 @@
     <video id="video" controls hidden></video>
   </div>
   <div id="script-table-container">
-    <h3>Script</h3>
     <!-- <textarea id="script-text" readonly></textarea> -->
     <table id="script-table">
       <thead>
@@ -129,7 +129,6 @@
   </div>
 </div>
 <div id="right-panel">
-  <h3>Subtitles</h3>
   <div id="subtitles">
     <div class="timestamp">
       <label for="timestamp1">00:00:01</label>
