@@ -1,0 +1,67 @@
+.
+├── LICENSE
+├── README.md
+├── apps
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   └── __init__.cpython-311.pyc
+│   └── caption
+│       ├── __init__.py
+│       ├── __pycache__
+│       │   ├── __init__.cpython-311.pyc
+│       │   ├── admin.cpython-311.pyc
+│       │   ├── apps.cpython-311.pyc
+│       │   ├── models.cpython-311.pyc
+│       │   ├── urls.cpython-311.pyc
+│       │   └── views.cpython-311.pyc
+│       ├── admin.py
+│       ├── apps.py
+│       ├── migrations
+│       │   ├── 0001_initial.py
+│       │   ├── __init__.py
+│       │   └── __pycache__
+│       │       ├── 0001_initial.cpython-311.pyc
+│       │       └── __init__.cpython-311.pyc
+│       ├── models.py
+│       ├── tests.py
+│       ├── urls.py
+│       └── views.py
+├── config
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-311.pyc
+│   │   ├── settings.cpython-311.pyc
+│   │   ├── urls.cpython-311.pyc
+│   │   └── wsgi.cpython-311.pyc
+│   ├── asgi.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── db.sqlite3
+├── manage.py
+├── requirements.txt
+├── static
+│   ├── images
+│   ├── manifest.json
+│   └── serviceworker.js
+├── templates
+│   ├── base.html
+│   ├── caption
+│   └── home.html
+├── test.txt
+└── uploads
+    └── videos
+        ├── Y2meta.app-큰_일_나는_이유_간지용_아님-144p.mp4
+        ├── Y2meta.app-큰_일_나는_이유_간지용_아님-144p_3dBxfKb.mp4
+        ├── Y2meta.app-큰_일_나는_이유_간지용_아님-144p_3l7F52F.mp4
+        ├── Y2meta.app-큰_일_나는_이유_간지용_아님-144p_4XLnr6X.mp4
+        ├── Y2meta.app-큰_일_나는_이유_간지용_아님-144p_4p03P3N.mp4
+        ├── Y2meta.app-큰_일_나는_이유_간지용_아님-144p_JMjMSJG.mp4
+        ├── Y2meta.app-큰_일_나는_이유_간지용_아님-144p_L5iVkr2.mp4
+        ├── Y2meta.app-큰_일_나는_이유_간지용_아님-144p_M8mkJ3z.mp4
+        ├── Y2meta.app-큰_일_나는_이유_간지용_아님-144p_Qgb3rj9.mp4
+        ├── Y2meta.app-큰_일_나는_이유_간지용_아님-144p_dbrs9Qn.mp4
+        ├── Y2meta.app-큰_일_나는_이유_간지용_아님-144p_ggS8zIJ.mp4
+        └── Y2meta.app-큰_일_나는_이유_간지용_아님-144p_jQ8p5MU.mp4
+
+15 directories, 50 files

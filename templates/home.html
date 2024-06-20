@@ -53,25 +53,6 @@
   .drop-zone p {
     pointer-events: none;
   }
-
-  .progress-bar-container {
-    width: 100%;
-    max-width: 600px;
-    height: 30px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    overflow: hidden;
-    margin: 20px auto;
-    display: none;
-  }
-
-  .progress-bar {
-    height: 100%;
-    width: 0;
-    background-color: #4caf50;
-    transition: width 0.1s;
-  }
-
 </style>
 {% endblock %}
 
@@ -81,9 +62,6 @@
 <div id="left-panel">
   <div class="drop-zone" id="drop-zone">
     <p>Drag & Drop your video file here</p>
-  </div>
-  <div class="progress-bar-container" id="progress-bar-container">
-    <div class="progress-bar" id="progress-bar"></div>
   </div>
   <br><br>
   <video id="video" controls hidden></video>
@@ -110,14 +88,13 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
   const dropZone = document.getElementById('drop-zone');
   const videoElement = document.getElementById('video');
   const scriptElement = document.getElementById('script');
   const scriptTextElement = document.getElementById('script-text');
   const subtitlesElement = document.getElementById('subtitles');
-  const progressBarContainer = document.getElementById('progress-bar-container');
-  const progressBar = document.getElementById('progress-bar');
 
   dropZone.addEventListener('dragover', (e) => {
     e.preventDefault();
@@ -148,49 +125,76 @@
   function uploadFile(file) {
     const formData = new FormData();
     formData.append('file', file);
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '{% url "caption:transcribe_video" %}', true);
-
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable) {
-        const percentComplete = (e.loaded / e.total) * 100;
-        progressBar.style.width = percentComplete + '%';
+    
+    axios.post('{% url "caption:make-caption" %}', formData, {
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Content-Type': 'multipart/form-data'
       }
-    };
+    })
+    .then(response => {
+      scriptTextElement.textContent = response.data;
+      dropZone.style.display = 'none';
+      videoElement.hidden = false;
+      videoElement.src = URL.createObjectURL(file);
+      fetchSubtitles('/uploads/' + file.name.split('.')[0] + '.srt');
+    })
+    .catch(error => {
+      alert('An error occurred while uploading the file.');
+    });
+  }
 
-    xhr.onloadstart = () => {
-      progressBarContainer.style.display = 'block';
-      progressBar.style.width = '0%';
-    };
+  function fetchSubtitles(subtitleFileUrl) {
+    axios.get(subtitleFileUrl)
+      .then(response => {
+        const subtitles = parseSubtitles(response.data);
+        displaySubtitles(subtitles);
+      })
+      .catch(error => {
+        alert('An error occurred while fetching the subtitles.');
+      });
+  }
 
-    xhr.onload = () => {
-      if (xhr.status === 200) {
-        const data = JSON.parse(xhr.responseText);
-        if (data.error) {
-          alert(data.error);
-        } else {
-          videoElement.src = data.video_url;
-          videoElement.hidden = false;
-          dropZone.style.display = 'none';
-          scriptElement.hidden = false;
-          scriptTextElement.textContent = data.transcribed_text;
-          progressBarContainer.style.display = 'none';
-          // TODO: Parse and display subtitles in #subtitles element
+  function parseSubtitles(data) {
+    const subtitles = [];
+    const lines = data.split('\n');
+    let timestamp = '';
+    let text = '';
+
+    lines.forEach(line => {
+      if (line.includes('-->')) {
+        if (timestamp && text) {
+          subtitles.push({ timestamp, text });
         }
+        timestamp = line;
+        text = '';
       } else {
-        alert('An error occurred during the upload. Please try again.');
+        text += line + '\n';
       }
-    };
+    });
 
-    xhr.onerror = () => {
-      alert('An error occurred during the upload. Please try again.');
-    };
+    if (timestamp && text) {
+      subtitles.push({ timestamp, text });
+    }
 
-    // Include CSRF token in the request
-    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+    return subtitles;
+  }
 
-    xhr.send(formData);
+  function displaySubtitles(subtitles) {
+    subtitlesElement.innerHTML = '';
+    subtitles.forEach((subtitle, index) => {
+      const div = document.createElement('div');
+      div.className = 'timestamp';
+      const label = document.createElement('label');
+      label.setAttribute('for', `timestamp${index}`);
+      label.textContent = subtitle.timestamp;
+      const textarea = document.createElement('textarea');
+      textarea.id = `timestamp${index}`;
+      textarea.textContent = subtitle.text.trim();
+      div.appendChild(label);
+      div.appendChild(textarea);
+      subtitlesElement.appendChild(div);
+    });
   }
 
   function getCookie(name) {
