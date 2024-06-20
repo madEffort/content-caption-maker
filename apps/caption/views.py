@@ -1,9 +1,6 @@
 from django.shortcuts import render
-from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from .models import Video
-import whisper
-import threading
 import os
 import subprocess
 from django.core.files.storage import FileSystemStorage
