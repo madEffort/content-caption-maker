@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from .models import Video
 import os
 import subprocess
@@ -25,17 +25,19 @@ def make_caption(request):
         srt_path = os.path.join(fs.location, srt_filename)
 
         # Read the .srt file contents
-        if os.path.exists(srt_path):
-            with open(srt_path, 'r', encoding='utf-8') as srt_file:
-                srt_content = srt_file.read()
+        # if os.path.exists(srt_path):
+        #     with open(srt_path, 'r', encoding='utf-8') as srt_file:
+        #         srt_content = srt_file.read()
 
-            # Clean up
-            fs.delete(filename)
+        #     # Clean up
+        #     fs.delete(filename)
             # os.remove(srt_path)
-            
-            return HttpResponse(srt_content, content_type="text/plain; charset=utf-8")
+        
+        if os.path.exists(srt_path):
+            fs.delete(filename)
+            return JsonResponse({'success': True}, status=200)
         else:
             fs.delete(filename)
-            return HttpResponse("SRT file not found.", status=500)
+            return JsonResponse({'error': "SRT file not found."}, status=500)
 
-    return HttpResponse("Please upload a video file.", status=400)
+    return JsonResponse({'error': "Please upload a video file."}, status=400)

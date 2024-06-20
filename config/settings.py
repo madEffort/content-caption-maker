@@ -172,4 +172,3 @@ PWA_APP_SCREENSHOTS = [
 ]
 
 PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, 'static', 'serviceworker.js')
-
