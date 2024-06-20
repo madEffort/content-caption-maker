@@ -193,7 +193,7 @@
         dropZone.style.display = 'none';
         videoElement.hidden = false;
         videoElement.src = URL.createObjectURL(file);
-        fetchSubtitles('/uploads/' + file.name.split('.')[0] + '.srt');
+        fetchSubtitles('/uploads/' + file.name.split('.').slice(0, -1).join('.') + '.srt');
       }
     })
     .catch(error => {

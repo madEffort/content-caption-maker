@@ -1,9 +1,13 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from .models import Video
 import os
 import subprocess
 from django.core.files.storage import FileSystemStorage
+import logging
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 def home(request):
@@ -23,15 +27,6 @@ def make_caption(request):
         # Assuming that the Whisper command generates an .srt file in the same directory
         srt_filename = filename.rsplit('.', 1)[0] + '.srt'
         srt_path = os.path.join(fs.location, srt_filename)
-
-        # Read the .srt file contents
-        # if os.path.exists(srt_path):
-        #     with open(srt_path, 'r', encoding='utf-8') as srt_file:
-        #         srt_content = srt_file.read()
-
-        #     # Clean up
-        #     fs.delete(filename)
-            # os.remove(srt_path)
         
         if os.path.exists(srt_path):
             fs.delete(filename)
