@@ -1,38 +1,53 @@
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
-from .models import Video
 import os
 import subprocess
-from django.core.files.storage import FileSystemStorage
 import logging
 
-# Configure logging
+from django.core.files.storage import FileSystemStorage
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
+
+
+# 로거 설정
 logger = logging.getLogger(__name__)
 
-# Create your views here.
-def home(request):
-    return render(request, 'home.html')
 
-def make_caption(request):
-    if request.method == 'POST' and request.FILES.get('file'):
-        video_file = request.FILES['file']
-        fs = FileSystemStorage()
-        filename = fs.save(video_file.name, video_file)
-        file_path = fs.path(filename)
+class MakeCaptionAPIView(APIView):
 
-        # Whisper 명령어 실행
-        command = ["faster-whisper", file_path, "--model", "base"]
-        subprocess.run(command, capture_output=True, text=True)
+    parser_classes = [MultiPartParser, FormParser]
 
-        # Assuming that the Whisper command generates an .srt file in the same directory
-        srt_filename = filename.rsplit('.', 1)[0] + '.srt'
-        srt_path = os.path.join(fs.location, srt_filename)
-        
-        if os.path.exists(srt_path):
+    def post(self, request, *args, **kwargs):
+
+        if "file" not in request.FILES:
+            return Response(
+                {"error": "Please upload a video file."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            video_file = request.FILES["file"]
+            fs = FileSystemStorage()
+            filename = fs.save(video_file.name, video_file)
+            file_path = fs.path(filename)
+
+            # Whisper 명령어 실행
+            command = ["faster-whisper", file_path, "--model", "base"]
+            subprocess.run(command, capture_output=True, text=True)
+
+            srt_filename = filename.rsplit(".", 1)[0] + ".srt"
+            srt_path = os.path.join(fs.location, srt_filename)
+
+            if os.path.exists(srt_path):
+                fs.delete(filename)
+                return Response({"success": True}, status=status.HTTP_200_OK)
+            else:
+                fs.delete(filename)
+                return Response(
+                    {"error": "SRT file not found."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+        except Exception as e:
+            logger.error(f"Error during processing: {e}")
             fs.delete(filename)
-            return JsonResponse({'success': True}, status=200)
-        else:
-            fs.delete(filename)
-            return JsonResponse({'error': "SRT file not found."}, status=500)
 
-    return JsonResponse({'error': "Please upload a video file."}, status=400)
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

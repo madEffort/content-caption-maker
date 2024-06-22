@@ -18,10 +18,13 @@ from django.contrib import admin
 from django.conf.urls.static import static
 from django.conf import settings
 from django.urls import path, include
+from config import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     # pwa
     path('', include('pwa.urls')),
-    path('', include('apps.caption.urls')),
+    # api
+    path('api/', include('apps.caption.urls')),
+    path('', views.HomeView.as_view(), name='home'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
